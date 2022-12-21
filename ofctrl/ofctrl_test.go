@@ -16,6 +16,7 @@ limitations under the License.
 package ofctrl
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -62,8 +63,16 @@ var ctrler *Controller
 var ovsDriver *ovsdbDriver.OvsDriver
 
 // Run an ovs-ofctl command
-func runOfctlCmd(cmd, brName string) ([]byte, error) {
-	cmdStr := fmt.Sprintf("sudo /usr/bin/ovs-ofctl -O Openflow13 %s %s", cmd, brName)
+func runOfctlCmd(cmd, brName string, args ...string) ([]byte, error) {
+	var cmdStr string
+	if len(args) == 0 {
+		cmdStr = fmt.Sprintf("sudo /usr/bin/ovs-ofctl -O Openflow13 %s %s", cmd, brName)
+	} else if len(args) == 1 {
+		cmdStr = fmt.Sprintf("sudo /usr/bin/ovs-ofctl -O Openflow13 %s %s %s", cmd, brName, args[0])
+	} else {
+		return nil, errors.New("error params")
+	}
+
 	out, err := exec.Command("/bin/sh", "-c", cmdStr).Output()
 	if err != nil {
 		log.Errorf("error running ovs-ofctl %s %s. Error: %v", cmd, brName, err)

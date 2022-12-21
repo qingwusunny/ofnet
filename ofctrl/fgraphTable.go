@@ -1,4 +1,5 @@
-/***
+/*
+**
 Copyright 2014 Cisco Systems Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,7 +59,7 @@ func (self *Table) NewFlow(match FlowMatch) (*Flow, error) {
 		flow.FlowID = globalFlowID // FIXME: need a better id allocation
 	}
 	globalFlowID += 1
-	flow.flowActions = make([]*FlowAction, 0)
+	flow.flowActions = make([]Action, 0)
 
 	log.Debugf("Creating new flow for match: %+v", match)
 
