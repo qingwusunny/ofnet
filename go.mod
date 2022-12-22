@@ -9,15 +9,13 @@ require (
 	github.com/cenkalti/rpc2 v0.0.0-20210604223624-c1acbc6ec984 // indirect
 	github.com/contiv/libOpenflow v0.0.0-20200107061746-e3817550c83b
 	github.com/contiv/libovsdb v0.0.0-20160406174930-bbc744d8ddc8
-	github.com/deckarep/golang-set v1.7.1
-	github.com/google/gopacket v1.1.18
-	github.com/jainvipin/bitset v1.0.1-0.20150123060543-1f0c6de81a62
-	github.com/osrg/gobgp v0.0.0
-	github.com/spf13/pflag v1.0.5
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/streamrail/concurrent-map v0.0.0-20160823150647-8bf1e9bacbf6
-	github.com/vishvananda/netlink v0.0.0-20170220200719-fe3b5664d23a
-	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
-	google.golang.org/grpc v1.35.0
+	github.com/stretchr/testify v1.5.1 // indirect
+	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
+	gopkg.in/yaml.v2 v2.2.4 // indirect
 )
 
 replace (

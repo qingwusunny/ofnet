@@ -2,6 +2,7 @@ package ovsdbDriver
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 )
@@ -11,12 +12,13 @@ var ovsDriver *OvsDriver
 func TestMain(m *testing.M) {
 	// Connect to OVS
 	ovsDriver = NewOvsDriver("ovsbr10")
+	os.Exit(m.Run())
 }
 
 func TestCreateDeleteBridge(t *testing.T) {
 
 	// Test create
-	err := ovsDriver.CreateBridge("ovsbr11")
+	err := ovsDriver.CreateBridge("ovsbr17")
 	if err != nil {
 		fmt.Printf("Error creating the bridge. Err: %v", err)
 		t.Errorf("Failed to create a bridge")
@@ -25,7 +27,7 @@ func TestCreateDeleteBridge(t *testing.T) {
 	time.After(100 * time.Millisecond)
 
 	// Test delete
-	err = ovsDriver.DeleteBridge("ovsbr11")
+	err = ovsDriver.DeleteBridge("ovsbr17")
 	if err != nil {
 		fmt.Printf("Error deleting the bridge. Err: %v", err)
 		t.Errorf("Failed to delete a bridge")
