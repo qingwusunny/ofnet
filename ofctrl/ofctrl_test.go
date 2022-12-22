@@ -1,4 +1,5 @@
-/***
+/*
+**
 Copyright 2014 Cisco Systems Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -169,7 +170,7 @@ func TestMain(m *testing.M) {
 
 	// run the test
 	exitCode := m.Run()
-
+	log.Infof("all test has run, exitcode: %d", exitCode)
 	// delete the bridge
 	err = ovsDriver.DeleteBridge("ovsbr11")
 	if err != nil {

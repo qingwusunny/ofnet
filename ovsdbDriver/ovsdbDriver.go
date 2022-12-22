@@ -261,10 +261,6 @@ func (self *OvsDriver) CreateBridge(bridgeName string) error {
 
 // Delete a bridge from ovs
 func (self *OvsDriver) DeleteBridge(bridgeName string) error {
-	// lock the cache for read
-	self.lock.RLock()
-	defer self.lock.RUnlock()
-
 	namedUuidStr := "dummy"
 	brUuid := []libovsdb.UUID{{GoUuid: namedUuidStr}}
 
@@ -277,6 +273,8 @@ func (self *OvsDriver) DeleteBridge(bridgeName string) error {
 		Where: []interface{}{condition},
 	}
 
+	// lock the cache for read
+	self.lock.RLock()
 	// also fetch the br-uuid from cache
 	for uuid, row := range self.ovsdbCache["Bridge"] {
 		name := row.Fields["name"].(string)
@@ -285,6 +283,7 @@ func (self *OvsDriver) DeleteBridge(bridgeName string) error {
 			break
 		}
 	}
+	self.lock.RUnlock()
 
 	// Inserting/Deleting a Bridge row in Bridge table requires mutating
 	// the open_vswitch table.
@@ -672,7 +671,7 @@ func (self *OvsDriver) RemoveController() error {
 
 // Check the local cache and see if the portname is taken already
 // HACK alert: This is used to pick next port number instead of managing
-//    port number space actively across agent restarts
+// port number space actively across agent restarts
 func (self *OvsDriver) IsPortNamePresent(intfName string) bool {
 	// lock the cache for read
 	self.lock.RLock()
