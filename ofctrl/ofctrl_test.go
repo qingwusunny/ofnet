@@ -89,7 +89,7 @@ func ofctlFlowDump(brName string) ([]string, error) {
 		return nil, err
 	}
 
-	log.Debugf("Flow dump: %s", flowDump)
+	log.Infof("Flow dump: %s", flowDump)
 	flowOutStr := string(flowDump)
 	flowDb := strings.Split(flowOutStr, "\n")[1:]
 
@@ -693,7 +693,6 @@ func TestMatchSetUdpFields(t *testing.T) {
 func TestSetGroup(t *testing.T) {
 	group, _ := ofActor.Switch.NewGroup(2, openflow13.OFPGT_SELECT)
 	group.Install()
-
 	flow, _ := ofActor.inputTable.NewFlow(FlowMatch{
 		Priority:  100,
 		Ethertype: 0x0800,
@@ -705,4 +704,67 @@ func TestSetGroup(t *testing.T) {
 		t.Errorf("failed to install flow action withh group")
 	}
 	group.Delete()
+}
+
+func TestCTWithZoneFiled(t *testing.T) {
+	flow, _ := ofActor.inputTable.NewFlow(FlowMatch{
+		Priority:  100,
+		Ethertype: 0x0800,
+	})
+	var tableID uint8 = 1
+	ctAct, err := NewConntrackActionWitchZoneField(false, false, &tableID, "nxm_nx_reg0", openflow13.NewNXRange(0, 15))
+	if err != nil {
+		t.Errorf("new ct action failed: %v", err)
+	}
+	err = flow.SetConntrack(ctAct)
+	if err != nil {
+		t.Errorf("SetConntrack failed: %v", err)
+	}
+
+	if !ofctlDumpFlowMatch("ovsbr11", 0, "priority=100,ip", "ct(table=1,zone=NXM_NX_REG0[0..15])") {
+		t.Errorf("failed to install ct flow with zone filed")
+	}
+	flow.Delete()
+}
+
+func TestCTNatAction(t *testing.T) {
+	flow, _ := ofActor.inputTable.NewFlow(FlowMatch{
+		Priority:  100,
+		Ethertype: 0x0800,
+	})
+	natAct, _ := NewNatAction().ToOfAction()
+	var tableID uint8 = 1
+	var zone uint16 = 65510
+	ctAct := NewConntrackAction(true, false, &tableID, &zone, natAct)
+	err := flow.SetConntrack(ctAct)
+	if err != nil {
+		t.Errorf("SetConntrack failed: %v", err)
+	}
+
+	if !ofctlDumpFlowMatch("ovsbr11", 0, "priority=100,ip", "ct(commit,table=1,zone=65510,nat)") {
+		t.Errorf("faield to install ct flow with nat action")
+	}
+
+	flow.Delete()
+}
+
+func TestCTdNatAction(t *testing.T) {
+	flow, _ := ofActor.inputTable.NewFlow(FlowMatch{
+		Priority:  100,
+		Ethertype: 0x0800,
+	})
+	natAct, _ := NewDNatAction(NewIPRange(net.IPv4(10, 1, 1, 23)), NewPortRange(45, 50)).ToOfAction()
+	var tableID uint8 = 1
+	var zone uint16 = 65510
+	ctAct := NewConntrackAction(true, false, &tableID, &zone, natAct)
+	err := flow.SetConntrack(ctAct)
+	if err != nil {
+		t.Errorf("SetConntrack failed: %v", err)
+	}
+
+	if !ofctlDumpFlowMatch("ovsbr11", 0, "priority=100,ip", "ct(commit,table=1,zone=65510,nat(dst=10.1.1.23:45-50))") {
+		t.Errorf("faield to install ct flow with nat action")
+	}
+
+	flow.Delete()
 }

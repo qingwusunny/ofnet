@@ -25,6 +25,7 @@ const (
 	ActTypeNXLoad      = "loadAction"
 	ActTypeNXMove      = "moveAction"
 	ActTypeCT          = "ct"
+	ActTypeCTNAT       = "nat"
 	ActTypeNXResubmit  = "resubmitAction"
 	ActTypeGroup       = "groupAction"
 	ActTypeNXLearn     = "learnAction"
@@ -79,11 +80,13 @@ func (a *OutputAction) GetActionType() string {
 }
 
 type ConnTrackAction struct {
-	Commit  bool
-	Force   bool
-	Table   *uint8
-	Zone    *uint16
-	Actions []openflow13.Action
+	Commit    bool
+	Force     bool
+	Table     *uint8
+	Zone      *uint16
+	ZoneField *openflow13.MatchField
+	ZoneRange *openflow13.NXRange
+	Actions   []openflow13.Action
 }
 
 func NewConntrackAction(commit bool, force bool, table *uint8, zone *uint16, actions ...openflow13.Action) *ConnTrackAction {
@@ -94,6 +97,22 @@ func NewConntrackAction(commit bool, force bool, table *uint8, zone *uint16, act
 		Zone:    zone,
 		Actions: actions,
 	}
+}
+
+func NewConntrackActionWitchZoneField(commit bool, force bool, table *uint8, zoneFieldName string, zoneRange *openflow13.NXRange,
+	actions ...openflow13.Action) (*ConnTrackAction, error) {
+	zoneFiled, err := openflow13.FindFieldHeaderByName(zoneFieldName, true)
+	if err != nil {
+		return nil, err
+	}
+	return &ConnTrackAction{
+		Commit:    commit,
+		Force:     force,
+		Table:     table,
+		ZoneField: zoneFiled,
+		ZoneRange: zoneRange,
+		Actions:   actions,
+	}, nil
 }
 
 func (a *ConnTrackAction) ToOfAction() (openflow13.Action, error) {
@@ -110,6 +129,9 @@ func (a *ConnTrackAction) ToOfAction() (openflow13.Action, error) {
 	}
 	if a.Zone != nil {
 		ctAction.ZoneImm(*a.Zone)
+	}
+	if a.ZoneField != nil && a.ZoneRange != nil {
+		ctAction.ZoneRange(a.ZoneField, a.ZoneRange)
 	}
 	if a.Actions != nil {
 		ctAction = ctAction.AddAction(a.Actions...)
@@ -517,4 +539,102 @@ func (a *GroupAction) ToOfAction() (openflow13.Action, error) {
 
 func (a *GroupAction) GetActionType() string {
 	return ActTypeGroup
+}
+
+type PortRange struct {
+	portMin uint16
+	portMax uint16
+}
+
+func NewPortRange(portMin uint16, portMax ...uint16) *PortRange {
+	pr := &PortRange{
+		portMin: portMin,
+		portMax: portMin,
+	}
+	if len(portMax) > 0 {
+		pr.portMax = portMax[0]
+	}
+	return pr
+}
+
+type IPRange struct {
+	ipMin net.IP
+	ipMax net.IP
+}
+
+func NewIPRange(ipMin net.IP, ipMax ...net.IP) *IPRange {
+	ipR := &IPRange{
+		ipMin: ipMin,
+		ipMax: ipMin,
+	}
+	if len(ipMax) > 0 {
+		ipR.ipMax = ipMax[0]
+	}
+	return ipR
+}
+
+func (i *IPRange) IsIPv6() bool {
+	if i == nil {
+		return false
+	}
+	if i.ipMin == nil {
+		return false
+	}
+	return i.ipMin.To4() == nil
+}
+
+type NXCTNatAction struct {
+	isSNat    bool
+	isDnat    bool
+	portRange *PortRange
+	ipRange   *IPRange
+}
+
+func NewNatAction() *NXCTNatAction {
+	return &NXCTNatAction{}
+}
+
+func NewSNatAction(ipr *IPRange, pr *PortRange) *NXCTNatAction {
+	return &NXCTNatAction{
+		isSNat:    true,
+		ipRange:   ipr,
+		portRange: pr,
+	}
+}
+
+func NewDNatAction(ipr *IPRange, pr *PortRange) *NXCTNatAction {
+	return &NXCTNatAction{
+		isDnat:    true,
+		ipRange:   ipr,
+		portRange: pr,
+	}
+}
+
+func (n *NXCTNatAction) GetActionType() string {
+	return ActTypeCTNAT
+}
+
+func (n *NXCTNatAction) ToOfAction() (openflow13.Action, error) {
+	act := openflow13.NewNXActionCTNAT()
+	if n.isSNat {
+		act.SetSNAT()
+	}
+	if n.isDnat {
+		act.SetDNAT()
+	}
+	if n.ipRange != nil {
+		if n.ipRange.IsIPv6() {
+			act.SetRangeIPv6Min(n.ipRange.ipMin)
+			act.SetRangeIPv6Max(n.ipRange.ipMax)
+		} else {
+			act.SetRangeIPv4Min(n.ipRange.ipMin)
+			act.SetRangeIPv4Max(n.ipRange.ipMax)
+		}
+	}
+	if n.portRange != nil {
+		act.SetRangeProtoMin(&n.portRange.portMin)
+		act.SetRangeProtoMax(&n.portRange.portMax)
+	}
+
+	return act, nil
 }
