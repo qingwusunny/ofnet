@@ -706,6 +706,7 @@ func TestSetGroup(t *testing.T) {
 	}
 	group.Delete()
 }
+
 func TestCTWithZoneFiled(t *testing.T) {
 	flow, _ := ofActor.inputTable.NewFlow(FlowMatch{
 		Priority:  100,
@@ -763,6 +764,37 @@ func TestCTdNatAction(t *testing.T) {
 
 	if !ofctlDumpFlowMatch("ovsbr11", 0, "priority=100,ip", "ct(commit,table=1,zone=65510,nat(dst=10.1.1.23:45-50))") {
 		t.Errorf("faield to install ct flow with nat action")
+	}
+
+	flow.Delete()
+}
+
+func TestLearnAction(t *testing.T) {
+	flow, _ := ofActor.inputTable.NewFlow(FlowMatch{
+		Priority:  90,
+		Ethertype: 0x0800,
+		IpProto:   0x06,
+	})
+
+	learnAct := NewLearnAction(3, 100, 0, 300, 0, 0, 0)
+	learnAct.SetDeleteLearned()
+	ethTypeField := LearnField{Name: "nxm_of_eth_type", Start: 0}
+	ipProtoField := LearnField{Name: "nxm_of_ip_proto", Start: 0}
+
+	tcpDstField := LearnField{Name: "nxm_of_tcp_dst", Start: 0}
+	reg0 := LearnField{Name: "nxm_nx_reg0", Start: 10}
+
+	learnAct.AddLearnedMatch(&ethTypeField, 16, nil, []byte{8, 0})
+	learnAct.AddLearnedMatch(&ipProtoField, 8, nil, []byte{0, 6})
+	learnAct.AddLearnedMatch(&tcpDstField, 16, &tcpDstField, nil)
+
+	learnAct.AddLearnedLoadAction(&reg0, 1, nil, []byte{0, 1})
+
+	flow.Learn(learnAct)
+	flow.Next(NewEmptyElem())
+
+	if !ofctlDumpFlowMatch("ovsbr11", 0, "priority=90,tcp", "learn(table=3,hard_timeout=300,priority=100,delete_learned,eth_type=0x800,nw_proto=6,NXM_OF_TCP_DST[],load:0x1->NXM_NX_REG0[10])") {
+		t.Errorf("failed to install a flow with learn action")
 	}
 
 	flow.Delete()
