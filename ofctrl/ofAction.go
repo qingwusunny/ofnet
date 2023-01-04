@@ -462,6 +462,112 @@ func (a *LearnAction) GetActionType() string {
 	return ActTypeNXLearn
 }
 
+func (a *LearnAction) AddLearnedLoadAction(learnDstField *LearnField, learnBitLen uint16, learnSrcField *LearnField, learnSrcValue []byte) error {
+	dstMatchField, err := openflow13.FindFieldHeaderByName(learnDstField.Name, true)
+	if err != nil {
+		return err
+	}
+	dstField := &openflow13.NXLearnSpecField{
+		Field: dstMatchField,
+		Ofs:   learnDstField.Start,
+	}
+
+	var learnSpec *openflow13.NXLearnSpec
+	if learnSrcValue != nil {
+		header := openflow13.NewLearnHeaderLoadFromValue(learnBitLen)
+		learnSpec = getLearnSpecWithValue(header, dstField, learnSrcValue)
+	} else {
+		header := openflow13.NewLearnHeaderLoadFromField(learnBitLen)
+		srcMatchField, err := openflow13.FindFieldHeaderByName(learnSrcField.Name, true)
+		if err != nil {
+			return err
+		}
+		srcField := &openflow13.NXLearnSpecField{
+			Field: srcMatchField,
+			Ofs:   learnSrcField.Start,
+		}
+		learnSpec = getLearnSpecWithField(header, dstField, srcField)
+	}
+
+	a.specs = append(a.specs, learnSpec)
+
+	return nil
+}
+
+func (a *LearnAction) SetDeleteLearned() {
+	a.flags |= openflow13.NX_LEARN_F_DELETE_LEARNED
+}
+
+func (a *LearnAction) AddLearnedOutputAction(learnSrcField *LearnField, learnBitLen uint16) error {
+	srcMatchField, err := openflow13.FindFieldHeaderByName(learnSrcField.Name, true)
+	if err != nil {
+		return err
+	}
+	srcField := &openflow13.NXLearnSpecField{
+		Field: srcMatchField,
+		Ofs:   learnSrcField.Start,
+	}
+	header := openflow13.NewLearnHeaderOutputFromField(learnBitLen)
+
+	learnSpec := &openflow13.NXLearnSpec{
+		Header:   header,
+		SrcField: srcField,
+	}
+
+	a.specs = append(a.specs, learnSpec)
+
+	return nil
+}
+
+func (a *LearnAction) AddLearnedMatch(learnDstField *LearnField, learnBitLen uint16, learnSrcField *LearnField, learnSrcValue []byte) error {
+	dstMatchField, err := openflow13.FindFieldHeaderByName(learnDstField.Name, true)
+	if err != nil {
+		return err
+	}
+
+	dstField := &openflow13.NXLearnSpecField{
+		Field: dstMatchField,
+		Ofs:   learnDstField.Start,
+	}
+
+	var learnSpec *openflow13.NXLearnSpec
+	if learnSrcValue != nil {
+		header := openflow13.NewLearnHeaderMatchFromValue(learnBitLen)
+		learnSpec = getLearnSpecWithValue(header, dstField, learnSrcValue)
+	} else {
+		header := openflow13.NewLearnHeaderMatchFromField(learnBitLen)
+		srcMatchField, err := openflow13.FindFieldHeaderByName(learnSrcField.Name, true)
+		if err != nil {
+			return err
+		}
+		srcField := &openflow13.NXLearnSpecField{
+			Field: srcMatchField,
+			Ofs:   learnSrcField.Start,
+		}
+		learnSpec = getLearnSpecWithField(header, dstField, srcField)
+	}
+
+	a.specs = append(a.specs, learnSpec)
+
+	return nil
+}
+
+func getLearnSpecWithValue(header *openflow13.NXLearnSpecHeader, dstField *openflow13.NXLearnSpecField, srcValue []byte) *openflow13.NXLearnSpec {
+	return &openflow13.NXLearnSpec{
+		Header:   header,
+		DstField: dstField,
+		SrcValue: srcValue,
+	}
+}
+
+func getLearnSpecWithField(header *openflow13.NXLearnSpecHeader, dstField *openflow13.NXLearnSpecField, srcField *openflow13.NXLearnSpecField) *openflow13.NXLearnSpec {
+	return &openflow13.NXLearnSpec{
+		Header:   header,
+		DstField: dstField,
+		SrcField: srcField,
+	}
+}
+
 type NXLoadAction struct {
 	Field *openflow13.MatchField
 	Value uint64
