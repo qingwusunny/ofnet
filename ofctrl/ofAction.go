@@ -99,7 +99,7 @@ func NewConntrackAction(commit bool, force bool, table *uint8, zone *uint16, act
 	}
 }
 
-func NewConntrackActionWitchZoneField(commit bool, force bool, table *uint8, zoneFieldName string, zoneRange *openflow13.NXRange,
+func NewConntrackActionWithZoneField(commit bool, force bool, table *uint8, zoneFieldName string, zoneRange *openflow13.NXRange,
 	actions ...openflow13.Action) (*ConnTrackAction, error) {
 	zoneFiled, err := openflow13.FindFieldHeaderByName(zoneFieldName, true)
 	if err != nil {
