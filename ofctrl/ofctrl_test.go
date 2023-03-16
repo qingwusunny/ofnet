@@ -713,7 +713,7 @@ func TestCTWithZoneFiled(t *testing.T) {
 		Ethertype: 0x0800,
 	})
 	var tableID uint8 = 1
-	ctAct, err := NewConntrackActionWitchZoneField(false, false, &tableID, "nxm_nx_reg0", openflow13.NewNXRange(0, 15))
+	ctAct, err := NewConntrackActionWithZoneField(false, false, &tableID, "nxm_nx_reg0", openflow13.NewNXRange(0, 15))
 	if err != nil {
 		t.Errorf("new ct action failed: %v", err)
 	}
