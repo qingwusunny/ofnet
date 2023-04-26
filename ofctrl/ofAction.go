@@ -86,6 +86,7 @@ type ConnTrackAction struct {
 	Zone      *uint16
 	ZoneField *openflow13.MatchField
 	ZoneRange *openflow13.NXRange
+	Alg       *uint16
 	Actions   []openflow13.Action
 }
 
@@ -115,6 +116,10 @@ func NewConntrackActionWithZoneField(commit bool, force bool, table *uint8, zone
 	}, nil
 }
 
+func (a *ConnTrackAction) SetAlg(alg uint16) {
+	a.Alg = &alg
+}
+
 func (a *ConnTrackAction) ToOfAction() (openflow13.Action, error) {
 	ctAction := openflow13.NewNXActionConnTrack()
 
@@ -132,6 +137,9 @@ func (a *ConnTrackAction) ToOfAction() (openflow13.Action, error) {
 	}
 	if a.ZoneField != nil && a.ZoneRange != nil {
 		ctAction.ZoneRange(a.ZoneField, a.ZoneRange)
+	}
+	if a.Alg != nil {
+		ctAction.Alg = *a.Alg
 	}
 	if a.Actions != nil {
 		ctAction = ctAction.AddAction(a.Actions...)
