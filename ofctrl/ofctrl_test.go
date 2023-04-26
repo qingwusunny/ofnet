@@ -763,7 +763,7 @@ func TestCTdNatAction(t *testing.T) {
 	}
 
 	if !ofctlDumpFlowMatch("ovsbr11", 0, "priority=100,ip", "ct(commit,table=1,zone=65510,nat(dst=10.1.1.23:45-50))") {
-		t.Errorf("faield to install ct flow with nat action")
+		t.Errorf("failed to install ct flow with nat action")
 	}
 
 	flow.Delete()
@@ -795,6 +795,29 @@ func TestLearnAction(t *testing.T) {
 
 	if !ofctlDumpFlowMatch("ovsbr11", 0, "priority=90,tcp", "learn(table=3,hard_timeout=300,priority=100,delete_learned,eth_type=0x800,nw_proto=6,NXM_OF_TCP_DST[],load:0x1->NXM_NX_REG0[10])") {
 		t.Errorf("failed to install a flow with learn action")
+	}
+
+	flow.Delete()
+}
+
+func TestAlg(t *testing.T) {
+	flow, _ := ofActor.inputTable.NewFlow(FlowMatch{
+		Priority:       100,
+		Ethertype:      0x0800,
+		IpProto:        0x06,
+		TcpDstPort:     21,
+		TcpDstPortMask: 65535,
+	})
+	var tableID uint8 = 1
+	var zone uint16 = 65510
+	ctAct := NewConntrackAction(true, false, &tableID, &zone)
+	ctAct.SetAlg(21)
+	err := flow.SetConntrack(ctAct)
+	if err != nil {
+		t.Errorf("SetConntrack failed: %v", err)
+	}
+	if !ofctlDumpFlowMatch("ovsbr11", 0, "priority=100,tcp,tp_dst=21", "ct(commit,table=1,zone=65510,alg=ftp") {
+		t.Errorf("failed to install ct flow with nat action")
 	}
 
 	flow.Delete()
