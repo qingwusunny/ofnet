@@ -8,30 +8,31 @@ import (
 )
 
 const (
-	ActTypePushVlan    = "pushVlan"
-	ActTypeSetVlan     = "setVlan"
-	ActTypePopVlan     = "popVlan"
-	ActTypeSetDstMac   = "setMacDa"
-	ActTypeSetSrcMac   = "setMacSa"
-	ActTypeSetTunnelID = "setTunnelId"
-	ActTypeMetatdata   = "setMetadata"
-	ActTypeSetSrcIP    = "setIP"
-	ActTypeSetDstIP    = "setIPDa"
-	ActTypeSetDSCP     = "setDscp"
-	ActTypeSetTCPsPort = "setTCPSrc"
-	ActTypeSetTCPdPort = "setTCPDst"
-	ActTypeSetUDPsPort = "setUDPSrc"
-	ActTypeSetUDPdPort = "setUDPDst"
-	ActTypeNXLoad      = "loadAction"
-	ActTypeNXMove      = "moveAction"
-	ActTypeCT          = "ct"
-	ActTypeCTNAT       = "nat"
-	ActTypeNXResubmit  = "resubmitAction"
-	ActTypeGroup       = "groupAction"
-	ActTypeNXLearn     = "learnAction"
-	ActTypeController  = "controller"
-	ActTypeOutput      = "outputAction"
-	ActTypeDecNwTtl    = "DecNwTtl"
+	ActTypePushVlan       = "pushVlan"
+	ActTypeSetVlan        = "setVlan"
+	ActTypePopVlan        = "popVlan"
+	ActTypeSetDstMac      = "setMacDa"
+	ActTypeSetSrcMac      = "setMacSa"
+	ActTypeSetTunnelID    = "setTunnelId"
+	ActTypeSetTunnelDstIP = "setTunnelDstIP"
+	ActTypeMetatdata      = "setMetadata"
+	ActTypeSetSrcIP       = "setIP"
+	ActTypeSetDstIP       = "setIPDa"
+	ActTypeSetDSCP        = "setDscp"
+	ActTypeSetTCPsPort    = "setTCPSrc"
+	ActTypeSetTCPdPort    = "setTCPDst"
+	ActTypeSetUDPsPort    = "setUDPSrc"
+	ActTypeSetUDPdPort    = "setUDPDst"
+	ActTypeNXLoad         = "loadAction"
+	ActTypeNXMove         = "moveAction"
+	ActTypeCT             = "ct"
+	ActTypeCTNAT          = "nat"
+	ActTypeNXResubmit     = "resubmitAction"
+	ActTypeGroup          = "groupAction"
+	ActTypeNXLearn        = "learnAction"
+	ActTypeController     = "controller"
+	ActTypeOutput         = "outputAction"
+	ActTypeDecNwTtl       = "DecNwTtl"
 )
 
 type Action interface {
@@ -283,6 +284,25 @@ func (a *SetTunnelID) ToOfAction() (openflow13.Action, error) {
 
 func (a *SetTunnelID) GetActionType() string {
 	return ActTypeSetTunnelID
+}
+
+type SetTunnelDstIP struct {
+	tunnelDstIP net.IP
+}
+
+func NewSetTunnelDstIP(dstIP net.IP) *SetTunnelDstIP {
+	return &SetTunnelDstIP{
+		tunnelDstIP: dstIP,
+	}
+}
+
+func (a *SetTunnelDstIP) ToOfAction() (openflow13.Action, error) {
+	tunnelDstIPv4 := openflow13.NewTunnelIpv4DstField(a.tunnelDstIP, nil)
+	return openflow13.NewActionSetField(*tunnelDstIPv4), nil
+}
+
+func (a *SetTunnelDstIP) GetActionType() string {
+	return ActTypeSetTunnelDstIP
 }
 
 type SetMetadata struct {

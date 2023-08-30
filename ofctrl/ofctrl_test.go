@@ -835,3 +835,18 @@ func TestAlg(t *testing.T) {
 
 	flow.Delete()
 }
+
+func TestSetTunndelDst(t *testing.T) {
+	flow, _ := ofActor.inputTable.NewFlow(FlowMatch{
+		Priority:  100,
+		Ethertype: 0x800,
+	})
+	_ = flow.SetTunnelDstIP(net.ParseIP("13.13.13.13"))
+	if err := flow.Next(NewEmptyElem()); err != nil {
+		t.Errorf("Set tunnel dst ip failed: %v", err)
+	}
+	if !ofctlDumpFlowMatch("ovsbr11", 0, "priority=100,ip", "set_field:13.13.13.13->tun_dst") {
+		t.Errorf("failed to install ct flow with set tunnel dst ip action")
+	}
+	flow.Delete()
+}
