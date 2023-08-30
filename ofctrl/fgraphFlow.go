@@ -535,7 +535,7 @@ func (self *Flow) installFlowActions(flowMod *openflow13.FlowMod,
 
 		case ActTypePopVlan, ActTypeSetDstMac, ActTypeSetSrcMac, ActTypeSetTunnelID, ActTypeSetSrcIP, ActTypeSetDstIP,
 			ActTypeSetDSCP, ActTypeSetTCPsPort, ActTypeSetTCPdPort, ActTypeSetUDPdPort, ActTypeSetUDPsPort, ActTypeNXLoad,
-			ActTypeNXMove, ActTypeNXLearn, ActTypeDecNwTtl:
+			ActTypeNXMove, ActTypeNXLearn, ActTypeDecNwTtl, ActTypeSetTunnelDstIP:
 
 			var prepend bool = true
 			act, _ := flowAction.ToOfAction()
@@ -892,6 +892,24 @@ func (self *Flow) UnsetDscp() error {
 	}
 
 	// If the flow entry was already installed, re-install it
+	if self.isInstalled {
+		self.install()
+	}
+
+	return nil
+}
+
+func (self *Flow) SetTunnelDstIP(dst net.IP) error {
+	act := NewSetTunnelDstIP(dst)
+	return self.AddAction(act)
+}
+
+func (self *Flow) AddAction(act Action) error {
+	self.lock.Lock()
+	defer self.lock.Unlock()
+
+	self.flowActions = append(self.flowActions, act)
+
 	if self.isInstalled {
 		self.install()
 	}
