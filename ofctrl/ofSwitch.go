@@ -37,6 +37,7 @@ type OFSwitch struct {
 	// Following are fgraph state for the switch
 	tableDb      map[uint8]*Table
 	groupDb      map[uint32]*Group
+	groupLock    sync.Mutex
 	dropAction   *Output
 	sendToCtrler *Output
 	normalLookup *Output

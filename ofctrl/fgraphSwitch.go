@@ -219,6 +219,8 @@ func (self *OFSwitch) DeleteFlowByCookie(cookieId, cookieMask uint64) {
 
 // Create a new group. return an error if it already exists
 func (self *OFSwitch) NewGroup(groupId uint32, groupType uint8) (*Group, error) {
+	self.groupLock.Lock()
+	defer self.groupLock.Unlock()
 	// check if the group already exists
 	if self.groupDb[groupId] != nil {
 		return nil, errors.New("group already exists")
@@ -233,9 +235,13 @@ func (self *OFSwitch) NewGroup(groupId uint32, groupType uint8) (*Group, error) 
 }
 
 func (self *OFSwitch) DeleteGroup(groupId uint32) {
+	self.groupLock.Lock()
+	defer self.groupLock.Unlock()
 	delete(self.groupDb, groupId)
 }
 
 func (self *OFSwitch) GetGroup(groupId uint32) *Group {
+	self.groupLock.Lock()
+	defer self.groupLock.Unlock()
 	return self.groupDb[groupId]
 }
