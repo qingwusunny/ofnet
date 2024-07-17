@@ -81,6 +81,7 @@ func NewSwitch(stream *util.MessageStream, dpid net.HardwareAddr, app AppInterfa
 
 		// Main receive loop for the switch
 		go s.receive()
+		go s.zjsend()
 
 	} else {
 		log.Infoln("Openflow Connection for switch:", dpid)
@@ -140,7 +141,20 @@ func (self *OFSwitch) switchDisconnected() {
 	self.app.SwitchDisconnected(self)
 	switchDb.Remove(self.DPID().String())
 	if self.retry != nil {
+		log.Error("zjj real disconnect")
 		self.retry <- true
+		log.Error("zj add disconnect")
+		self.retry <- false
+	}
+}
+
+func (self *OFSwitch) zjsend() {
+	time.Sleep(10*time.Minute)
+	log.Error("zjbegin to send disconnect")
+	for i:=0 ;i < 10;i++ {
+		log.Error("zj send disconnect")
+		self.retry<- false
+		time.Sleep(3*time.Second)
 	}
 }
 

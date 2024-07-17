@@ -133,6 +133,7 @@ func (c *Controller) Connect(sock string) {
 			log.Println("Controller is delete")
 			return
 		case disConnection := <-c.DisconnChan:
+			log.Printf("zjjjj receive disconnect %v, sock is %s", disConnection, sock)
 			if disConnection == false {
 				continue
 			}
